@@ -1,0 +1,7 @@
+{
+  "name": "rechnung-scanner",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular"
+}
