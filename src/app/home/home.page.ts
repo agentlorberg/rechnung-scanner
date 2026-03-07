@@ -1,4 +1,7 @@
 import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { IonicModule } from '@ionic/angular';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { LlmAnalysisService, RechnungsAnalyse } from '../services/llm-analysis.service';
 import { StorageService, RechnungsHistorie } from '../services/storage.service';
@@ -7,7 +10,9 @@ import Chart from 'chart.js/auto';
 @Component({
   selector: 'app-home',
   templateUrl: 'home.page.html',
-  styleUrls: ['home.page.scss']
+  styleUrls: ['home.page.scss'],
+  standalone: true,
+  imports: [CommonModule, FormsModule, IonicModule]
 })
 export class HomePage {
   currentAnalyse: RechnungsAnalyse | null = null;
@@ -65,13 +70,11 @@ export class HomePage {
     this.isLoading = true;
     this.selectedTab = 'upload';
 
-    // Text-Extraktion (simuliert für PDF/Demo)
     const pdfText = 'Extrahiert aus: ' + (dateiname || 'Bild');
     
     const analyse = await this.llmService.analysiereRechnung(pdfText);
     this.currentAnalyse = analyse;
     
-    // Speichern
     const eintrag: RechnungsHistorie = {
       id: crypto.randomUUID(),
       dateiname: dateiname || `Scan_${new Date().toISOString()}`,
@@ -99,14 +102,13 @@ export class HomePage {
   private erstelleCharts() {
     if (!this.currentAnalyse) return;
 
-    // Score Chart
     const ctx1 = document.getElementById('scoreChart') as HTMLCanvasElement;
     if (ctx1) {
       if (this.scoreChart) this.scoreChart.destroy();
       this.scoreChart = new Chart(ctx1, {
         type: 'doughnut',
         data: {
-          labels: ['Gesamteindruck', 'Fehlt'],
+          labels: ['Score', 'Rest'],
           datasets: [{
             data: [this.currentAnalyse.gesamteindruck, 10 - this.currentAnalyse.gesamteindruck],
             backgroundColor: ['#4CAF50', '#E0E0E0'],
