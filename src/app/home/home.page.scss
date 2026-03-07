@@ -1,27 +1,139 @@
-#container {
-  text-align: center;
+.upload-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
 
-  position: absolute;
+.hero-section {
+  text-align: center;
+  padding: 40px 20px;
+  
+  .hero-icon {
+    font-size: 80px;
+    color: var(--ion-color-primary);
+    margin-bottom: 20px;
+  }
+  
+  h1 {
+    font-size: 28px;
+    font-weight: bold;
+    margin: 0 0 10px 0;
+  }
+  
+  p {
+    color: var(--ion-color-medium);
+    font-size: 16px;
+  }
+}
+
+.upload-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  padding: 0 20px;
+  
+  ion-button {
+    --border-radius: 12px;
+    height: 56px;
+    font-weight: 600;
+  }
+}
+
+.loading-overlay {
+  position: fixed;
+  top: 0;
   left: 0;
   right: 0;
-  top: 50%;
-  transform: translateY(-50%);
+  bottom: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  
+  ion-spinner {
+    width: 60px;
+    height: 60px;
+  }
+  
+  p {
+    color: white;
+    margin-top: 20px;
+    font-size: 18px;
+  }
 }
 
-#container strong {
-  font-size: 20px;
-  line-height: 26px;
+.info-card {
+  margin: 20px;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
-#container p {
-  font-size: 16px;
-  line-height: 22px;
-
-  color: #8c8c8c;
-
-  margin: 0;
+.ergebnis-container {
+  padding-bottom: 80px;
 }
 
-#container a {
-  text-decoration: none;
+.score-card {
+  border-radius: 16px;
+  text-align: center;
+  
+  .score-content {
+    padding: 20px;
+  }
+  
+  .score-value {
+    font-size: 48px;
+    font-weight: bold;
+    line-height: 1;
+  }
+  
+  .score-label {
+    font-size: 14px;
+    margin-top: 5px;
+    opacity: 0.9;
+  }
+}
+
+.valid-text {
+  color: var(--ion-color-success);
+  font-weight: 600;
+}
+
+.error-text {
+  color: var(--ion-color-danger);
+  font-weight: 600;
+}
+
+.mwst-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--ion-color-light);
+  
+  &:last-child {
+    border-bottom: none;
+  }
+  
+  .betrag {
+    font-weight: 600;
+  }
+}
+
+.historie-container {
+  h2 {
+    padding: 20px;
+    margin: 0;
+    font-size: 22px;
+  }
+}
+
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  border-top: 1px solid var(--ion-color-light);
+  z-index: 1000;
 }

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">rechnung-scanner</string>
+    <string name="title_activity_main">rechnung-scanner</string>
+    <string name="package_name">com.lorberg.rechnung</string>
+    <string name="custom_url_scheme">com.lorberg.rechnung</string>
+</resources>

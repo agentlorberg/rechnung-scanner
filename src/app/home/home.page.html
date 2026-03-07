@@ -1,20 +1,198 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
+<ion-header>
+  <ion-toolbar color="primary">
     <ion-title>
-      Blank
+      <ion-icon name="document-text"></ion-icon>
+      Rechnungs-Scanner Pro
     </ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">Blank</ion-title>
-    </ion-toolbar>
-  </ion-header>
+<ion-content class="ion-padding">
+  <!-- Upload Tab -->
+  <div *ngIf="selectedTab === 'upload'" class="upload-container">
+    <div class="hero-section">
+      <ion-icon name="receipt" class="hero-icon"></ion-icon>
+      <h1>Rechnung analysieren</h1>
+      <p>Laden Sie eine PDF oder nehmen Sie ein Foto auf</p>
+    </div>
 
-  <div id="container">
-    <strong>Ready to create an app?</strong>
-    <p>Start with Ionic <a target="_blank" rel="noopener noreferrer" href="https://ionicframework.com/docs/components">UI Components</a></p>
+    <div class="upload-buttons">
+      <ion-button expand="block" size="large" (click)="fotoAufnehmen()">
+        <ion-icon name="camera" slot="start"></ion-icon>
+        Foto aufnehmen
+      </ion-button>
+      
+      <ion-button expand="block" size="large" color="secondary">
+        <ion-icon name="document" slot="start"></ion-icon>
+        <label style="cursor: pointer; width: 100%;">
+          PDF hochladen
+          <input type="file" accept=".pdf,image/*" (change)="dateiHochladen($event)" hidden>
+        </label>
+      </ion-button>
+    </div>
+
+    <!-- Lade-Indikator -->
+    <div *ngIf="isLoading" class="loading-overlay">
+      <ion-spinner name="crescent"></ion-spinner>
+      <p>Analysiere mit KI...</p>
+    </div>
+
+    <!-- Kurze Infos -->
+    <ion-card class="info-card">
+      <ion-card-header>
+        <ion-card-title>Was wird geprüft?</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <ion-list lines="none">
+          <ion-item>
+            <ion-icon name="checkmark-circle" slot="start" color="success"></ion-icon>
+            <ion-label>Positionen × Menge = Summe</ion-label>
+          </ion-item>
+          <ion-item>
+            <ion-icon name="checkmark-circle" slot="start" color="success"></ion-icon>
+            <ion-label>MWST-Berechnung korrekt?</ion-label>
+          </ion-item>
+          <ion-item>
+            <ion-icon name="checkmark-circle" slot="start" color="success"></ion-icon>
+            <ion-label>Plausibilität (KI-Score 0-10)</ion-label>
+          </ion-item>
+        </ion-list>
+      </ion-card-content>
+    </ion-card>
   </div>
-</ion-content>
+
+  <!-- Ergebnis / Details Tab -->
+  <div *ngIf="(selectedTab === 'ergebnis' || selectedTab === 'details') && currentAnalyse" class="ergebnis-container">
+    <!-- Übersicht Cards -->
+    <ion-grid>
+      <ion-row>
+        <ion-col size="6">
+          <ion-card class="score-card" [color]="getBewertungFarbe(currentAnalyse.gesamteindruck)">
+            <ion-card-header>
+              <ion-card-title>Gesamteindruck</ion-card-title>
+            </ion-card-header>
+            <ion-card-content class="score-content">
+              <div class="score-value">{{ currentAnalyse.gesamteindruck }}/10</div>
+              <div class="score-label">{{ getBewertungText(currentAnalyse.gesamteindruck) }}</div>
+              <canvas id="scoreChart"></canvas>
+            </ion-card-content>
+          </ion-card>
+        </ion-col>
+        <ion-col size="6">
+          <ion-card class="score-card" color="tertiary">
+            <ion-card-header>
+              <ion-card-title>Datenqualität</ion-card-title>
+            </ion-card-header>
+            <ion-card-content class="score-content">
+              <div class="score-value">{{ currentAnalyse.qualitaetInterpretation }}/10</div>
+              <div class="score-label">Scan-Qualität</div>
+            </ion-card-content>
+          </ion-card>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+
+    <!-- Endbetrag Validierung -->
+    <ion-card [color]="currentAnalyse.stimmtEndbetrag ? 'success' : 'danger'">
+      <ion-card-header>
+        <ion-card-title>
+          <ion-icon [name]="currentAnalyse.stimmtEndbetrag ? 'checkmark-circle' : 'alert-circle'"></ion-icon>
+          Endbetrag: {{ currentAnalyse.endbetrag | currency:'EUR' }}
+        </ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <p *ngIf="currentAnalyse.stimmtEndbetrag" class="valid-text">✓ Alle Berechnungen stimmen</p>
+        <p *ngIf="!currentAnalyse.stimmtEndbetrag" class="error-text">✗ Abweichung erkannt!</p>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Positionen -->
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>Positionen ({{ currentAnalyse.positionen.length }})</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <ion-list>
+          <ion-item *ngFor="let pos of currentAnalyse.positionen" [color]="pos.plausibel ? undefined : 'warning'">
+            <ion-label>
+              <h3>{{ pos.bezeichnung }}</h3>
+              <p>{{ pos.menge }} × {{ pos.einzelpreis | currency:'EUR' }} = {{ pos.gesamtpreis | currency:'EUR' }}</p>
+            </ion-label>
+            <ion-badge slot="end" [color]="pos.plausibel ? 'success' : 'warning'">
+              {{ pos.plausibel ? 'OK' : '?' }}
+            </ion-badge>
+          </ion-item>
+        </ion-list>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- MWST -->
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>Mehrwertsteuer</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <div *ngFor="let mwst of currentAnalyse.mwst.saetze" class="mwst-row">
+          <span>{{ mwst.satz }}% MwSt:</span>
+          <span class="betrag">{{ mwst.betrag | currency:'EUR' }}</span>
+        </div>
+        <ion-item lines="full" [color]="currentAnalyse.mwst.korrektBerechnet ? 'success' : 'danger'">
+          <ion-label>Gesamt MwSt</ion-label>
+          <ion-note slot="end">{{ currentAnalyse.mwst.gesamtMwst | currency:'EUR' }}</ion-note>
+        </ion-item>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Bemerkungen -->
+    <ion-card *ngIf="currentAnalyse.bemerkungen.length > 0">
+      <ion-card-header>
+        <ion-card-title>Bemerkungen</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <ion-list lines="none">
+          <ion-item *ngFor="let bem of currentAnalyse.bemerkungen">
+            <ion-icon name="information-circle" slot="start" color="primary"></ion-icon>
+            <ion-label>{{ bem }}</ion-label>
+          </ion-item>
+        </ion-list>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Warnings -->
+    <ion-card *ngIf="currentAnalyse.warnings.length > 0" color="warning">
+      <ion-card-header>
+        <ion-card-title>Warnungen</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <ion-list lines="none">
+          <ion-item *ngFor="let warn of currentAnalyse.warnings" color="warning">
+            <ion-icon name="warning" slot="start"></ion-icon>
+            <ion-label>{{ warn }}</ion-label>
+          </ion-item>
+        </ion-list>
+      </ion-card-content>
+    </ion-card>
+
+    <ion-button expand="block" fill="clear" (click)="zurueckZuHistorie()">
+      Zurück zur Übersicht
+    </ion-button>
+  </div>
+
+  <!-- Historie Tab -->
+  <div *ngIf="selectedTab === 'historie'" class="historie-container">
+    <h2>Vergangene Analysen ({{ historie.length }})</h2>
+    
+    <ion-list>
+      <ion-item *ngFor="let eintrag of historie" (click)="zeigeDetails(eintrag)" button>
+        <ion-thumbnail slot="start">
+          <ion-icon name="document" style="font-size: 32px;"></ion-icon>
+        </ion-thumbnail>
+        <ion-label>
+          <h3>{{ eintrag.dateiname }}</h3>
+          <p>{{ eintrag.datum | date:'dd.MM.yyyy HH:mm' }}</p>
+          <ion-note>
+            Score: {{ eintrag.analyse.gesamteindruck }}/10 | 
+            {{ eintrag.analyse.stimmtEndbetrag ? '✓ Korrekt' : '✗ Fehler' }}
+          </ion-note>
+        </ion-label>
+        <ion-button slot="end" fill="clear" color="danger" (click)="eintragLoeschen(eintrag.id, $event)">
