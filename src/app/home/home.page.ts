@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { RechnungsAnalyse } from '../services/llm-analysis.service';
-import { NvidiaLlmService } from '../services/nvidia-llm.service';
+import { BackendLlmService } from '../services/backend-llm.service';
 import { StorageService, RechnungsHistorie } from '../services/storage.service';
 import Chart from 'chart.js/auto';
 
@@ -30,7 +30,7 @@ export class HomePage {
   error: string | null = null;
 
   constructor(
-    private nvidiaLlm: NvidiaLlmService,
+    private backendLlm: BackendLlmService,
     private storage: StorageService
   ) {}
 
@@ -88,9 +88,9 @@ MWST 19%: 166,25€
 Brutto: 1041,25€`;
 
     try {
-      console.log('🚀 Starte NVIDIA LLM Analyse...');
-      const analyse = await this.nvidiaLlm.analysiereRechnungMitLLM(pdfText);
-      console.log('✅ LLM Analyse erfolgreich:', analyse);
+      console.log('🚀 Starte BACKEND LLM Analyse...');
+      const analyse = await this.backendLlm.analysiereRechnung(base64, dateiname || 'Scan');
+      console.log('✅ BACKEND Analyse erfolgreich:', analyse);
       
       this.currentAnalyse = analyse;
 
